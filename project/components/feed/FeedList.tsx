@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FeedCard } from "@/components/feed/FeedCard";
+import { StaggerContainer, StaggerItem } from "@/components/ui/Motion";
 import { FeedSkeleton } from "@/components/ui/SkeletonLoader";
 import { createClient } from "@/lib/supabase/client";
 import type { LifeFeedPost } from "@/types";
@@ -60,9 +61,11 @@ export function FeedList({ initialPosts, total, filter, tag }: FeedListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <StaggerContainer className="space-y-4">
       {posts.map((post) => (
-        <FeedCard key={post.id} post={post} />
+        <StaggerItem key={post.id}>
+          <FeedCard post={post} />
+        </StaggerItem>
       ))}
 
       {loading && <FeedSkeleton />}
@@ -76,6 +79,6 @@ export function FeedList({ initialPosts, total, filter, tag }: FeedListProps) {
           load more ({posts.length} / {total})
         </button>
       )}
-    </div>
+    </StaggerContainer>
   );
 }

@@ -3,8 +3,10 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { getSiteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "Bhavesh OS — Digital HQ",
     template: "%s | Bhavesh OS",
@@ -16,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://bhavesh.dev",
+    url: getSiteUrl(),
     siteName: "Bhavesh OS",
     title: "Bhavesh OS — Digital HQ",
     description:

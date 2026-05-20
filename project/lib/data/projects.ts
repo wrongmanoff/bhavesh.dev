@@ -48,6 +48,27 @@ export async function getProjectBySlug(slug: string): Promise<Project | null> {
   return data as Project;
 }
 
+export async function getAllProjectSlugs(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("projects").select("slug");
+
+  return (data ?? []).map((project) => project.slug).filter(Boolean);
+}
+
+export async function getProjectsForSitemap(): Promise<
+  Array<{ slug: string; created_at: string }>
+> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .select("slug, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.filter((project) => Boolean(project.slug));
+}
+
 export async function getRelatedProjects(
   project: Project,
   limit = 3

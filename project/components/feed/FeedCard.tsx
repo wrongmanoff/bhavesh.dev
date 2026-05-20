@@ -24,7 +24,7 @@ export function FeedCard({ post }: FeedCardProps) {
     post.content.length > 280 ? truncate(post.content, 280) : post.content;
 
   return (
-    <Card hover glow className="p-5 animate-fade-in">
+    <Card hover glow className="p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 flex-wrap">
           <Badge className={cn("border", config.color)}>

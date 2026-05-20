@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { AchievementCard } from "@/components/vault/AchievementCard";
+import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/Motion";
 import type { Achievement } from "@/types";
 
 interface VaultGridProps {
@@ -18,30 +19,33 @@ export function VaultGrid({ featured, rest }: VaultGridProps) {
     <>
       {featured.length > 0 && (
         <section className="mb-10">
-          <h2 className="font-mono text-xs text-[#00ff88] uppercase tracking-widest mb-4">
-            featured
-          </h2>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <FadeInUp>
+            <h2 className="font-mono text-xs text-[#00ff88] uppercase tracking-widest mb-4">
+              featured
+            </h2>
+          </FadeInUp>
+          <StaggerContainer className="grid sm:grid-cols-2 gap-4">
             {featured.map((a) => (
-              <AchievementCard
-                key={a.id}
-                achievement={a}
-                featured
-                onImageClick={setLightbox}
-              />
+              <StaggerItem key={a.id}>
+                <AchievementCard
+                  achievement={a}
+                  featured
+                  onImageClick={setLightbox}
+                />
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerContainer>
         </section>
       )}
 
       {rest.length > 0 && (
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+        <StaggerContainer className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
           {rest.map((a) => (
-            <div key={a.id} className="break-inside-avoid">
+            <StaggerItem key={a.id} className="break-inside-avoid">
               <AchievementCard achievement={a} onImageClick={setLightbox} />
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       )}
 
       {lightbox && (

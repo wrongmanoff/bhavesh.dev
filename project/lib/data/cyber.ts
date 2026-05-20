@@ -121,3 +121,18 @@ export async function getAllCyberSlugs(): Promise<string[]> {
 
   return (data ?? []).map((r) => r.slug).filter(Boolean);
 }
+
+export async function getCyberPostsForSitemap(): Promise<
+  Array<{ slug: string; created_at: string }>
+> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("cyber_posts")
+    .select("slug, created_at")
+    .eq("published", true)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.filter((post) => Boolean(post.slug));
+}

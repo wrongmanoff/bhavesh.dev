@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { getGalleryItems } from "@/lib/data/gallery";
@@ -50,10 +51,12 @@ export default async function AdminGalleryPage() {
             <Link key={item.id} href={`/admin/gallery/${item.id}`}>
               <Card hover className="overflow-hidden">
                 <div className="relative aspect-[4/3]">
-                  <img
+                  <Image
                     src={item.image_url}
                     alt={item.title}
-                    className="object-cover w-full h-full"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 33vw"
                   />
                 </div>
                 <div className="p-4">

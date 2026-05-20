@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/Card";
 
+type GalleryCategory = "screenshot" | "setup" | "travel" | "cert" | "coding" | "event";
+
 export function GalleryForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     caption: "",
-    category: "screenshot" as const,
+    category: "screenshot" as GalleryCategory,
     taken_at: "",
     image_url: "",
   });
@@ -74,7 +76,12 @@ export function GalleryForm() {
           </label>
           <select
             value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                category: e.target.value as GalleryCategory,
+              })
+            }
             className="w-full bg-[#0d0d0d] border border-[#1e1e1e] rounded px-3 py-2 text-white text-sm focus:border-[#00ff88]/50 focus:outline-none"
             required
           >

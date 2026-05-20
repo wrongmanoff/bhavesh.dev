@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { StaggerContainer, StaggerItem } from "@/components/ui/Motion";
 import { VaultGrid } from "@/components/vault/VaultGrid";
 import { getAchievements, getVaultStats } from "@/lib/data/achievements";
 
@@ -23,12 +24,20 @@ export default async function VaultPage() {
         description="Certificates, hackathons, club positions, rankings, and badges — the proof of work."
       />
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-        <Stat label="total" value={stats.total} />
-        <Stat label="certificates" value={stats.totalCerts} />
-        <Stat label="hackathons" value={stats.hackathons} />
-        <Stat label="featured" value={stats.featured} />
-      </div>
+      <StaggerContainer className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+        <StaggerItem>
+          <Stat label="total" value={stats.total} />
+        </StaggerItem>
+        <StaggerItem>
+          <Stat label="certificates" value={stats.totalCerts} />
+        </StaggerItem>
+        <StaggerItem>
+          <Stat label="hackathons" value={stats.hackathons} />
+        </StaggerItem>
+        <StaggerItem>
+          <Stat label="featured" value={stats.featured} />
+        </StaggerItem>
+      </StaggerContainer>
 
       {achievements.length === 0 ? (
         <div className="text-center py-16 border border-dashed border-[#1e1e1e] rounded-lg">

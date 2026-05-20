@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 interface GalleryFiltersProps {
@@ -10,8 +9,6 @@ interface GalleryFiltersProps {
 }
 
 export function GalleryFilters({ categories, activeCategory }: GalleryFiltersProps) {
-  const searchParams = useSearchParams();
-
   const categoryLabels: Record<string, string> = {
     all: "All",
     screenshot: "Screenshots",

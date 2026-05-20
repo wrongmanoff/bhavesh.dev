@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { FadeInUp } from "@/components/ui/Motion";
 
 interface SectionHeaderProps {
   label?: string;
@@ -9,7 +10,7 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ label, title, description, className }: SectionHeaderProps) {
   return (
-    <div className={cn("mb-8", className)}>
+    <FadeInUp className={cn("mb-8", className)}>
       {label && (
         <p className="font-mono text-xs text-[#00ff88] uppercase tracking-widest mb-2">
           {label}
@@ -19,6 +20,6 @@ export function SectionHeader({ label, title, description, className }: SectionH
       {description && (
         <p className="mt-2 text-[#a0a0a0] text-sm leading-relaxed max-w-2xl">{description}</p>
       )}
-    </div>
+    </FadeInUp>
   );
 }
