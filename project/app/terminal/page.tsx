@@ -17,7 +17,6 @@ const COMMANDS = {
   projects          - Show projects with links
   ctf               - Recent CTF achievements
   contact           - Show contact information
-  social            - Social media links
   resume            - Download resume
   clear             - Clear terminal
   now               - Current focus
@@ -28,7 +27,7 @@ const COMMANDS = {
   whoami: `visitor@bhavesh
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Name:     Bhavesh Katragadda
-Role:     Cybersecurity Student • Builder • Linux Enthusiast
+Role:     Cybersecurity Student • Linux Enthusiast
 Location: Digital HQ
 Status:   Documenting the journey
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -36,19 +35,18 @@ Status:   Documenting the journey
   skills: `Technical Skills
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   🔒 Cybersecurity
-     • Penetration Testing
+     • Penetration Testing, SOC Analyst
      • CTF (HackTheBox, TryHackMe)
      • Network Security
      • Linux Hardening
 
   💻 Development
-     • Next.js, React, TypeScript
      • Python, Bash Scripting
      • Git, GitHub
 
   🐧 Linux
      • System Administration
-     • Docker, Kubernetes
+     • Docker 
      • Shell Scripting
      • Security Tools
 
@@ -56,47 +54,34 @@ Status:   Documenting the journey
      • Nmap, Burp Suite, Wireshark
      • Metasploit, John the Ripper
      • Vim, tmux
+     • and many more
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
 
   projects: `Projects
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   🚀 Bhavesh OS        - This digital HQ
-  🔐 Security Tools    - Custom security scripts
-  📊 Analytics Dashboard - Data visualization
-  🌐 Portfolio Sites  - Web development projects
+  🔐 Security Tools    - NOT yet done but in future
 
 Visit /projects for detailed information
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
 
   ctf: `CTF Achievements
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  🏆 HackTheBox        - Medium difficulty machines
-  🎯 TryHackMe         - 50+ rooms completed
-  🔓 PicoCTF           - Top 10% finish
-  📚 CTFlearn          - Advanced challenges
+  🎯 TryHackMe         - 10+ rooms completed
+  🔓 ctftime           - check the links section 
 
 Visit /cyber for writeups and walkthroughs
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
 
   contact: `Contact Information
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  📧 Email:    bhavesh@example.com
-  💼 LinkedIn: linkedin.com/in/bhavesh
-  🐙 GitHub:   github.com/bhavesh
-  🐦 Twitter:  @bhavesh
+  📧 Email:    wrongmanoff@gmail.com
+  💼 LinkedIn: https://www.linkedin.com/in/bhavesh-katragadda-oo7/
+  🐙 GitHub:   https://github.com/wrongmanoff
+  🐦 Twitter:  https://x.com/wrongmanoff
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
 
-  social: `Social Links
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  🐙 GitHub    - github.com/bhavesh
-  💼 LinkedIn  - linkedin.com/in/bhavesh
-  🐦 Twitter   - @bhavesh
-  🎮 TryHackMe - tryhackme.com/p/bhavesh
-  🏠 HackTheBox- hackthebox.com/p/bhavesh
-
-Visit /links for all links
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
 
   resume: `Downloading resume...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -109,7 +94,7 @@ Visit /links for direct download
   now: `Current Focus
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Building Bhavesh OS - A complete digital HQ
-Learning advanced penetration testing
+Learning penetration testing
 Contributing to open-source security tools
 
 Visit /now for full details
@@ -117,7 +102,7 @@ Visit /now for full details
 
   "cat about.txt": `About Me
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-I'm a cybersecurity student and builder passionate
+I'm a cybersecurity student passionate
 about creating secure, elegant systems. I document
 my journey through CTFs, projects, and life experiences.
 
