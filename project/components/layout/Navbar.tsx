@@ -74,12 +74,6 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/admin"
-            className="ml-2 font-mono text-xs px-3 py-1.5 rounded border border-[#1e1e1e] text-[#6b6b6b] hover:border-[#00ff88]/40 hover:text-[#00ff88] transition-all duration-200"
-          >
-            admin
-          </Link>
         </div>
 
         <div className="flex items-center gap-1">
@@ -112,12 +106,6 @@ export default function Navbar() {
                 ~/{link.label}
               </Link>
             ))}
-            <Link
-              href="/admin"
-              className="font-mono text-sm px-3 py-2 rounded text-[#6b6b6b] hover:text-[#00ff88] transition-all"
-            >
-              ~/admin
-            </Link>
           </div>
         </div>
       )}

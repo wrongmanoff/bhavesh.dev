@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createGalleryItem } from "@/app/x9k2-manage/actions/gallery";
+import { FieldError } from "@/components/admin/FieldError";
 import { Card } from "@/components/ui/Card";
 
 type GalleryCategory = "screenshot" | "setup" | "travel" | "cert" | "coding" | "event";
 
 export function GalleryForm() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isPending, startTransition] = useTransition();
   const [formData, setFormData] = useState({
     title: "",
     caption: "",
@@ -20,26 +23,27 @@ export function GalleryForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setError("");
+    setFieldErrors({});
 
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.from("gallery").insert({
+    startTransition(async () => {
+      const result = await createGalleryItem({
         title: formData.title,
         caption: formData.caption,
         category: formData.category,
-        taken_at: formData.taken_at || null,
-        image_url: formData.image_url,
+        takenAt: formData.taken_at,
+        imageUrl: formData.image_url,
       });
 
-      if (error) throw error;
-      router.push("/admin/gallery");
-    } catch (error) {
-      console.error("Error creating gallery item:", error);
-      alert("Failed to create gallery item");
-    } finally {
-      setLoading(false);
-    }
+      if (!result.ok) {
+        setError(result.error ?? "Unable to create gallery item.");
+        setFieldErrors(result.fieldErrors ?? {});
+        return;
+      }
+
+      router.push("/x9k2-manage/gallery");
+      router.refresh();
+    });
   };
 
   return (
@@ -56,6 +60,7 @@ export function GalleryForm() {
             className="w-full bg-[#0d0d0d] border border-[#1e1e1e] rounded px-3 py-2 text-white text-sm focus:border-[#00ff88]/50 focus:outline-none"
             required
           />
+          <FieldError error={fieldErrors.title} />
         </div>
 
         <div>
@@ -68,6 +73,7 @@ export function GalleryForm() {
             className="w-full bg-[#0d0d0d] border border-[#1e1e1e] rounded px-3 py-2 text-white text-sm focus:border-[#00ff88]/50 focus:outline-none resize-none"
             rows={3}
           />
+          <FieldError error={fieldErrors.caption} />
         </div>
 
         <div>
@@ -92,6 +98,7 @@ export function GalleryForm() {
             <option value="coding">Coding</option>
             <option value="event">Event</option>
           </select>
+          <FieldError error={fieldErrors.category} />
         </div>
 
         <div>
@@ -104,6 +111,7 @@ export function GalleryForm() {
             onChange={(e) => setFormData({ ...formData, taken_at: e.target.value })}
             className="w-full bg-[#0d0d0d] border border-[#1e1e1e] rounded px-3 py-2 text-white text-sm focus:border-[#00ff88]/50 focus:outline-none"
           />
+          <FieldError error={fieldErrors.takenAt} />
         </div>
 
         <div>
@@ -118,18 +126,21 @@ export function GalleryForm() {
             placeholder="https://..."
             required
           />
+          <FieldError error={fieldErrors.imageUrl} />
           <p className="text-xs text-[#4a4a4a] mt-1">
             Upload to Supabase Storage and paste the public URL here
           </p>
         </div>
 
+        {error && <p className="text-red-400 text-xs font-mono">{error}</p>}
+
         <div className="flex gap-3 pt-4">
           <button
             type="submit"
-            disabled={loading}
+            disabled={isPending}
             className="flex-1 font-mono text-xs px-4 py-2 rounded bg-[#00ff88] text-black hover:bg-[#00cc6a] transition-colors disabled:opacity-50"
           >
-            {loading ? "saving..." : "save"}
+            {isPending ? "saving..." : "save"}
           </button>
           <button
             type="button"

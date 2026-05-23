@@ -19,9 +19,18 @@ export async function generateMetadata({
 }: ReviewPageProps): Promise<Metadata> {
   const review = await getReviewById(params.id);
   if (!review) return { title: "Not Found" };
+  const description = review.content.slice(0, 160);
+
   return {
     title: review.title,
-    description: review.content.slice(0, 160),
+    description,
+    openGraph: {
+      title: review.title,
+      description,
+      type: "article",
+      publishedTime: review.created_at,
+      images: review.images.length > 0 ? [{ url: review.images[0] }] : [],
+    },
   };
 }
 

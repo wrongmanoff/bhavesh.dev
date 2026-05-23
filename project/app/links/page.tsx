@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { LinksHub } from "@/components/links/LinksHub";
 import { getLinks } from "@/lib/data/links";
 import { Terminal } from "lucide-react";
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 };
 
 const RESUME_URL = process.env.NEXT_PUBLIC_RESUME_URL ?? "";
+const PROFILE_IMAGE_URL = process.env.NEXT_PUBLIC_PROFILE_IMAGE_URL ?? "";
 
 export default async function LinksPage() {
   const links = await getLinks();
@@ -17,7 +19,17 @@ export default async function LinksPage() {
     <div className="min-h-[calc(100vh-3.5rem)] flex flex-col items-center justify-center px-4 py-24">
       <div className="text-center mb-10">
         <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[#111111] border border-[#1e1e1e] flex items-center justify-center">
-          <Terminal size={32} className="text-[#00ff88]" />
+          {PROFILE_IMAGE_URL ? (
+            <Image
+              src={PROFILE_IMAGE_URL}
+              alt="Bhavesh Katragadda profile"
+              width={80}
+              height={80}
+              className="w-full h-full object-cover rounded-full"
+            />
+          ) : (
+            <Terminal size={32} className="text-[#00ff88]" />
+          )}
         </div>
         <h1 className="text-2xl font-bold text-white mb-1">Bhavesh Katragadda</h1>
         <p className="font-mono text-sm text-[#6b6b6b]">

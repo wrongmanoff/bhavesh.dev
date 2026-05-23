@@ -2,9 +2,10 @@
 
 import "@uiw/react-md-editor/markdown-editor.css";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createProject, deleteProject, updateProject } from "@/app/x9k2-manage/actions/projects";
+import { FieldError } from "@/components/admin/FieldError";
 import type { Project } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { slugify } from "@/lib/utils";
@@ -42,9 +43,10 @@ export function ProjectEditor({ project }: ProjectEditorProps) {
   const [status, setStatus] = useState<Project["status"]>(
     project?.status ?? "wip"
   );
-  const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [slugManual, setSlugManual] = useState(!!project?.slug);
+  const [isPending, startTransition] = useTransition();
 
   function handleTitleChange(value: string) {
     setTitle(value);
@@ -53,69 +55,55 @@ export function ProjectEditor({ project }: ProjectEditorProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError("");
+    setFieldErrors({});
 
-    const finalSlug = slug.trim() || slugify(title);
-    if (!finalSlug) {
-      setError("Slug is required");
-      setSaving(false);
-      return;
-    }
+    startTransition(async () => {
+      const payload = {
+        title,
+        slug: slug.trim() || slugify(title),
+        description,
+        whyBuilt,
+        problemFaced,
+        lessonsLearned,
+        futurePlans,
+        techStack,
+        screenshots,
+        architectureImg,
+        githubUrl,
+        liveUrl,
+        status,
+      };
 
-    const payload = {
-      title,
-      slug: finalSlug,
-      description,
-      why_built: whyBuilt,
-      problem_faced: problemFaced,
-      lessons_learned: lessonsLearned,
-      future_plans: futurePlans,
-      tech_stack: techStack
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-      screenshots: screenshots
-        .split("\n")
-        .map((u) => u.trim())
-        .filter(Boolean),
-      architecture_img: architectureImg.trim(),
-      github_url: githubUrl.trim(),
-      live_url: liveUrl.trim(),
-      status,
-    };
+      const result = project?.id
+        ? await updateProject(project.id, payload)
+        : await createProject(payload);
 
-    const supabase = createClient();
-
-    if (project?.id) {
-      const { error: updateError } = await supabase
-        .from("projects")
-        .update(payload)
-        .eq("id", project.id);
-      if (updateError) {
-        setError(updateError.message);
-        setSaving(false);
+      if (!result.ok) {
+        setError(result.error ?? "Unable to save project.");
+        setFieldErrors(result.fieldErrors ?? {});
         return;
       }
-    } else {
-      const { error: insertError } = await supabase.from("projects").insert(payload);
-      if (insertError) {
-        setError(insertError.message);
-        setSaving(false);
-        return;
-      }
-    }
 
-    router.push("/admin/projects");
-    router.refresh();
+      router.push("/x9k2-manage/projects");
+      router.refresh();
+    });
   }
 
   async function handleDelete() {
     if (!project?.id || !confirm("Delete this project?")) return;
-    const supabase = createClient();
-    await supabase.from("projects").delete().eq("id", project.id);
-    router.push("/admin/projects");
-    router.refresh();
+    setError("");
+    setFieldErrors({});
+
+    startTransition(async () => {
+      const result = await deleteProject(project.id);
+      if (!result.ok) {
+        setError(result.error ?? "Unable to delete project.");
+        return;
+      }
+      router.push("/x9k2-manage/projects");
+      router.refresh();
+    });
   }
 
   return (
@@ -132,6 +120,7 @@ export function ProjectEditor({ project }: ProjectEditorProps) {
               required
               className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00ff88]/50"
             />
+            <FieldError error={fieldErrors.title} />
           </div>
           <div>
             <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">
@@ -146,6 +135,7 @@ export function ProjectEditor({ project }: ProjectEditorProps) {
               required
               className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#00ff88]/50"
             />
+            <FieldError error={fieldErrors.slug} />
           </div>
         </div>
 
@@ -160,6 +150,7 @@ export function ProjectEditor({ project }: ProjectEditorProps) {
             rows={2}
             className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00ff88]/50"
           />
+          <FieldError error={fieldErrors.description} />
         </div>
 
         <div className="grid sm:grid-cols-3 gap-4">
@@ -178,6 +169,7 @@ export function ProjectEditor({ project }: ProjectEditorProps) {
                 </option>
               ))}
             </select>
+            <FieldError error={fieldErrors.status} />
           </div>
           <div>
             <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">
@@ -189,6 +181,7 @@ export function ProjectEditor({ project }: ProjectEditorProps) {
               placeholder="https://github.com/..."
               className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#00ff88]/50"
             />
+            <FieldError error={fieldErrors.githubUrl} />
           </div>
           <div>
             <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">
@@ -200,6 +193,7 @@ export function ProjectEditor({ project }: ProjectEditorProps) {
               placeholder="https://..."
               className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#00ff88]/50"
             />
+            <FieldError error={fieldErrors.liveUrl} />
           </div>
         </div>
 
@@ -213,6 +207,7 @@ export function ProjectEditor({ project }: ProjectEditorProps) {
             placeholder="Next.js, TypeScript, Supabase"
             className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00ff88]/50"
           />
+          <FieldError error={fieldErrors.techStack} />
         </div>
 
         <div>
@@ -224,6 +219,7 @@ export function ProjectEditor({ project }: ProjectEditorProps) {
             onChange={(e) => setArchitectureImg(e.target.value)}
             className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#00ff88]/50"
           />
+          <FieldError error={fieldErrors.architectureImg} />
         </div>
 
         <div>
@@ -236,30 +232,43 @@ export function ProjectEditor({ project }: ProjectEditorProps) {
             rows={3}
             className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#00ff88]/50"
           />
+          <FieldError error={fieldErrors.screenshots} />
         </div>
 
-        <MdField label="why i built this" value={whyBuilt} onChange={setWhyBuilt} />
+        <MdField
+          label="why i built this"
+          value={whyBuilt}
+          onChange={setWhyBuilt}
+          error={fieldErrors.whyBuilt}
+        />
         <MdField
           label="problems i faced"
           value={problemFaced}
           onChange={setProblemFaced}
+          error={fieldErrors.problemFaced}
         />
         <MdField
           label="lessons learned"
           value={lessonsLearned}
           onChange={setLessonsLearned}
+          error={fieldErrors.lessonsLearned}
         />
-        <MdField label="future plans" value={futurePlans} onChange={setFuturePlans} />
+        <MdField
+          label="future plans"
+          value={futurePlans}
+          onChange={setFuturePlans}
+          error={fieldErrors.futurePlans}
+        />
 
         {error && <p className="text-red-400 text-xs font-mono">{error}</p>}
 
         <div className="flex gap-3">
           <button
             type="submit"
-            disabled={saving}
+            disabled={isPending}
             className="font-mono text-sm px-4 py-2 rounded bg-[#00ff88]/10 border border-[#00ff88]/40 text-[#00ff88] hover:bg-[#00ff88]/20 disabled:opacity-50"
           >
-            {saving ? "saving..." : project ? "update" : "create"}
+            {isPending ? "saving..." : project ? "update" : "create"}
           </button>
           {project && (
             <button
@@ -280,15 +289,18 @@ function MdField({
   label,
   value,
   onChange,
+  error,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  error?: string;
 }) {
   return (
     <div>
       <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">{label}</label>
       <MDEditor value={value} onChange={(v) => onChange(v ?? "")} height={200} />
+      <FieldError error={error} />
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAdminUserId } from "@/lib/auth/is-admin";
 
-export async function updateSession(request: NextRequest) {
+export async function enforceAdminSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -29,21 +30,24 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
-
-  if (isAdminRoute && !isLoginPage && !user) {
+  // No user — redirect to login
+  // (login page itself is excluded by matcher in middleware.ts so we never reach here for /login)
+  if (!user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/admin/login";
+    url.pathname = "/x9k2-manage/login";
     url.searchParams.set("redirect", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
 
-  if (isLoginPage && user) {
+  // User exists but not admin — redirect to login with error
+  const admin = await isAdminUserId(supabase, user.id);
+  if (!admin) {
     const url = request.nextUrl.clone();
-    url.pathname = "/admin";
+    url.pathname = "/x9k2-manage/login";
+    url.searchParams.set("error", "unauthorized");
     return NextResponse.redirect(url);
   }
 
+  // Authenticated admin — allow through
   return supabaseResponse;
 }

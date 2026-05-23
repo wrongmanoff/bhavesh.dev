@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createAchievement, deleteAchievement, updateAchievement } from "@/app/x9k2-manage/actions/achievements";
+import { FieldError } from "@/components/admin/FieldError";
 import type { Achievement } from "@/types";
 import { Card } from "@/components/ui/Card";
 
@@ -30,56 +31,58 @@ export function AchievementEditor({ achievement }: AchievementEditorProps) {
   const [imageUrl, setImageUrl] = useState(achievement?.image_url ?? "");
   const [credentialUrl, setCredentialUrl] = useState(achievement?.credential_url ?? "");
   const [featured, setFeatured] = useState(achievement?.featured ?? false);
-  const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
+  const [isPending, startTransition] = useTransition();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError("");
+    setFieldErrors({});
 
-    const payload = {
-      title,
-      type,
-      issuer,
-      date: date || null,
-      description,
-      image_url: imageUrl,
-      credential_url: credentialUrl,
-      featured,
-    };
+    startTransition(async () => {
+      const payload = {
+        title,
+        type,
+        issuer,
+        date,
+        description,
+        imageUrl,
+        credentialUrl,
+        featured,
+      };
 
-    const supabase = createClient();
+      const result = achievement?.id
+        ? await updateAchievement(achievement.id, payload)
+        : await createAchievement(payload);
 
-    if (achievement?.id) {
-      const { error: err } = await supabase
-        .from("achievements")
-        .update(payload)
-        .eq("id", achievement.id);
-      if (err) {
-        setError(err.message);
-        setSaving(false);
+      if (!result.ok) {
+        setError(result.error ?? "Unable to save achievement.");
+        setFieldErrors(result.fieldErrors ?? {});
         return;
       }
-    } else {
-      const { error: err } = await supabase.from("achievements").insert(payload);
-      if (err) {
-        setError(err.message);
-        setSaving(false);
-        return;
-      }
-    }
 
-    router.push("/admin/vault");
-    router.refresh();
+      router.push("/x9k2-manage/vault");
+      router.refresh();
+    });
   }
 
   async function handleDelete() {
     if (!achievement?.id || !confirm("Delete this achievement?")) return;
-    const supabase = createClient();
-    await supabase.from("achievements").delete().eq("id", achievement.id);
-    router.push("/admin/vault");
-    router.refresh();
+
+    setError("");
+    setFieldErrors({});
+
+    startTransition(async () => {
+      const result = await deleteAchievement(achievement.id);
+      if (!result.ok) {
+        setError(result.error ?? "Unable to delete achievement.");
+        return;
+      }
+
+      router.push("/x9k2-manage/vault");
+      router.refresh();
+    });
   }
 
   return (
@@ -94,6 +97,7 @@ export function AchievementEditor({ achievement }: AchievementEditorProps) {
               required
               className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white"
             />
+            <FieldError error={fieldErrors.title} />
           </div>
           <div>
             <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">type</label>
@@ -102,53 +106,95 @@ export function AchievementEditor({ achievement }: AchievementEditorProps) {
               onChange={(e) => setType(e.target.value as Achievement["type"])}
               className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white"
             >
-              {TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
+              {TYPES.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
               ))}
             </select>
+            <FieldError error={fieldErrors.type} />
           </div>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">issuer</label>
-            <input value={issuer} onChange={(e) => setIssuer(e.target.value)} className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white" />
+            <input
+              value={issuer}
+              onChange={(e) => setIssuer(e.target.value)}
+              className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white"
+            />
+            <FieldError error={fieldErrors.issuer} />
           </div>
           <div>
             <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">date</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white" />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white"
+            />
+            <FieldError error={fieldErrors.date} />
           </div>
         </div>
 
         <div>
           <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">description</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white" />
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white"
+          />
+          <FieldError error={fieldErrors.description} />
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">image url</label>
-            <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm font-mono text-white" />
+            <input
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm font-mono text-white"
+            />
+            <FieldError error={fieldErrors.imageUrl} />
           </div>
           <div>
             <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">credential url</label>
-            <input value={credentialUrl} onChange={(e) => setCredentialUrl(e.target.value)} className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm font-mono text-white" />
+            <input
+              value={credentialUrl}
+              onChange={(e) => setCredentialUrl(e.target.value)}
+              className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm font-mono text-white"
+            />
+            <FieldError error={fieldErrors.credentialUrl} />
           </div>
         </div>
 
         <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={featured}
+            onChange={(e) => setFeatured(e.target.checked)}
+          />
           <span className="font-mono text-xs text-[#a0a0a0]">featured</span>
         </label>
 
         {error && <p className="text-red-400 text-xs font-mono">{error}</p>}
 
         <div className="flex gap-3">
-          <button type="submit" disabled={saving} className="font-mono text-sm px-4 py-2 rounded bg-[#00ff88]/10 border border-[#00ff88]/40 text-[#00ff88] disabled:opacity-50">
-            {saving ? "saving..." : achievement ? "update" : "create"}
+          <button
+            type="submit"
+            disabled={isPending}
+            className="font-mono text-sm px-4 py-2 rounded bg-[#00ff88]/10 border border-[#00ff88]/40 text-[#00ff88] disabled:opacity-50"
+          >
+            {isPending ? "saving..." : achievement ? "update" : "create"}
           </button>
           {achievement && (
-            <button type="button" onClick={handleDelete} className="font-mono text-sm px-4 py-2 rounded border border-red-500/30 text-red-400">
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="font-mono text-sm px-4 py-2 rounded border border-red-500/30 text-red-400"
+            >
               delete
             </button>
           )}

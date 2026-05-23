@@ -9,7 +9,7 @@ export function LogoutButton() {
   async function handleLogout() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/admin/login");
+    router.push("/x9k2-manage/login");
     router.refresh();
   }
 

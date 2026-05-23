@@ -2,9 +2,10 @@
 
 import "@uiw/react-md-editor/markdown-editor.css";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createCyberPost, deleteCyberPost, updateCyberPost } from "@/app/x9k2-manage/actions/cyber";
+import { FieldError } from "@/components/admin/FieldError";
 import type { CyberPost } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { slugify } from "@/lib/utils";
@@ -32,9 +33,10 @@ export function CyberPostEditor({ post }: CyberPostEditorProps) {
   const [platform, setPlatform] = useState(post?.platform ?? "");
   const [tags, setTags] = useState(post?.tags?.join(", ") ?? "");
   const [published, setPublished] = useState(post?.published ?? false);
-  const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [slugManual, setSlugManual] = useState(!!post?.slug);
+  const [isPending, startTransition] = useTransition();
 
   function handleTitleChange(value: string) {
     setTitle(value);
@@ -43,64 +45,50 @@ export function CyberPostEditor({ post }: CyberPostEditorProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError("");
+    setFieldErrors({});
 
-    const finalSlug = slug.trim() || slugify(title);
-    if (!finalSlug) {
-      setError("Slug is required");
-      setSaving(false);
-      return;
-    }
+    startTransition(async () => {
+      const payload = {
+        title,
+        slug: slug.trim() || slugify(title),
+        contentMd,
+        category,
+        difficulty,
+        platform,
+        tags,
+        published,
+      };
 
-    const payload = {
-      title,
-      slug: finalSlug,
-      content_md: contentMd,
-      category,
-      difficulty,
-      platform,
-      tags: tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-      images: post?.images ?? [],
-      published,
-    };
+      const result = post?.id
+        ? await updateCyberPost(post.id, payload)
+        : await createCyberPost(payload);
 
-    const supabase = createClient();
-
-    if (post?.id) {
-      const { error: updateError } = await supabase
-        .from("cyber_posts")
-        .update(payload)
-        .eq("id", post.id);
-      if (updateError) {
-        setError(updateError.message);
-        setSaving(false);
+      if (!result.ok) {
+        setError(result.error ?? "Unable to save article.");
+        setFieldErrors(result.fieldErrors ?? {});
         return;
       }
-    } else {
-      const { error: insertError } = await supabase
-        .from("cyber_posts")
-        .insert(payload);
-      if (insertError) {
-        setError(insertError.message);
-        setSaving(false);
-        return;
-      }
-    }
 
-    router.push("/admin/cyber");
-    router.refresh();
+      router.push("/x9k2-manage/cyber");
+      router.refresh();
+    });
   }
 
   async function handleDelete() {
     if (!post?.id || !confirm("Delete this article?")) return;
-    const supabase = createClient();
-    await supabase.from("cyber_posts").delete().eq("id", post.id);
-    router.push("/admin/cyber");
-    router.refresh();
+    setError("");
+    setFieldErrors({});
+
+    startTransition(async () => {
+      const result = await deleteCyberPost(post.id);
+      if (!result.ok) {
+        setError(result.error ?? "Unable to delete article.");
+        return;
+      }
+      router.push("/x9k2-manage/cyber");
+      router.refresh();
+    });
   }
 
   return (
@@ -117,6 +105,7 @@ export function CyberPostEditor({ post }: CyberPostEditorProps) {
               required
               className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00ff88]/50"
             />
+            <FieldError error={fieldErrors.title} />
           </div>
           <div>
             <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">
@@ -131,6 +120,7 @@ export function CyberPostEditor({ post }: CyberPostEditorProps) {
               required
               className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#00ff88]/50"
             />
+            <FieldError error={fieldErrors.slug} />
           </div>
         </div>
 
@@ -152,6 +142,7 @@ export function CyberPostEditor({ post }: CyberPostEditorProps) {
                 </option>
               ))}
             </select>
+            <FieldError error={fieldErrors.category} />
           </div>
           <div>
             <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">
@@ -170,6 +161,7 @@ export function CyberPostEditor({ post }: CyberPostEditorProps) {
                 </option>
               ))}
             </select>
+            <FieldError error={fieldErrors.difficulty} />
           </div>
           <div>
             <label className="font-mono text-xs text-[#6b6b6b] block mb-1.5">
@@ -181,6 +173,7 @@ export function CyberPostEditor({ post }: CyberPostEditorProps) {
               placeholder="HackTheBox, TryHackMe..."
               className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00ff88]/50"
             />
+            <FieldError error={fieldErrors.platform} />
           </div>
         </div>
 
@@ -194,6 +187,7 @@ export function CyberPostEditor({ post }: CyberPostEditorProps) {
             placeholder="linux, privesc, htb"
             className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00ff88]/50"
           />
+          <FieldError error={fieldErrors.tags} />
         </div>
 
         <div>
@@ -205,6 +199,7 @@ export function CyberPostEditor({ post }: CyberPostEditorProps) {
             onChange={(v) => setContentMd(v ?? "")}
             height={400}
           />
+          <FieldError error={fieldErrors.contentMd} />
         </div>
 
         <label className="flex items-center gap-2 cursor-pointer">
@@ -221,10 +216,10 @@ export function CyberPostEditor({ post }: CyberPostEditorProps) {
         <div className="flex gap-3">
           <button
             type="submit"
-            disabled={saving}
+            disabled={isPending}
             className="font-mono text-sm px-4 py-2 rounded bg-[#00ff88]/10 border border-[#00ff88]/40 text-[#00ff88] hover:bg-[#00ff88]/20 disabled:opacity-50"
           >
-            {saving ? "saving..." : post ? "update" : "create"}
+            {isPending ? "saving..." : post ? "update" : "create"}
           </button>
           {post && (
             <button
