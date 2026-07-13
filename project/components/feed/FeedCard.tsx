@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -6,6 +9,7 @@ import { FEED_TYPE_CONFIG, formatDate, truncate } from "@/lib/utils";
 import type { LifeFeedPost } from "@/types";
 import { cn } from "@/lib/utils";
 
+const  EXPAND_THRESHOLD =280;
 const TYPE_EMOJI: Record<LifeFeedPost["type"], string> = {
   productive: "🟢",
   wasted: "🔴",
@@ -20,8 +24,12 @@ interface FeedCardProps {
 
 export function FeedCard({ post }: FeedCardProps) {
   const config = FEED_TYPE_CONFIG[post.type];
-  const preview =
-    post.content.length > 280 ? truncate(post.content, 280) : post.content;
+  // NEW
+  const [expanded, setExpanded] = useState(false);
+  const isLong = post.content.length > EXPAND_THRESHOLD;
+  const displayContent =
+    isLong && !expanded ? truncate(post.content, EXPAND_THRESHOLD) : post.content;
+    
 
   return (
     <Card hover glow className="p-5">
@@ -49,8 +57,20 @@ export function FeedCard({ post }: FeedCardProps) {
       )}
 
       <div className="text-sm text-[#c0c0c0] leading-relaxed">
-        <MarkdownRenderer content={preview} />
+        <MarkdownRenderer content={displayContent} />
       </div>
+
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="mt-2 font-mono text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+        >
+          {expanded ? "show less ↑" : "read more ↓"}
+        </button>
+      )}
+
+      
 
       {post.images.length > 0 && (
         <div className="mt-4 grid grid-cols-2 gap-2">
